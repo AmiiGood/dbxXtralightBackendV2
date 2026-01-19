@@ -26,8 +26,8 @@ const UsuarioForm = ({ usuario, onSuccess, onCancel }) => {
         email: usuario.email || '',
         password: '',
         nombreCompleto: usuario.nombreCompleto || '',
-        rolId: usuario.rolId || '',
-        areaId: usuario.areaId || '',
+        rolId: usuario.rolId || usuario.rol?.id || '',
+        areaId: usuario.areaId || usuario.area?.id || '',
       });
     }
   }, [usuario]);
@@ -133,7 +133,7 @@ const UsuarioForm = ({ usuario, onSuccess, onCancel }) => {
         name="rolId"
         value={formData.rolId}
         onChange={handleChange}
-        options={roles.map((rol) => ({ value: rol.id, label: rol.nombre }))}
+        options={roles?.map((rol) => ({ value: rol.id, label: rol.nombre })) || []}
         required
         error={errors.rolId}
       />
@@ -143,7 +143,7 @@ const UsuarioForm = ({ usuario, onSuccess, onCancel }) => {
         name="areaId"
         value={formData.areaId}
         onChange={handleChange}
-        options={areas.map((area) => ({ value: area.id, label: area.nombre }))}
+        options={areas?.map((area) => ({ value: area.id, label: area.nombre })) || []}
         required
         error={errors.areaId}
       />
