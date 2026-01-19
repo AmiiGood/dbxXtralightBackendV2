@@ -16,8 +16,8 @@ const Modal = ({ isOpen, onClose, title, children, size = 'medium' }) => {
           onClick={onClose}
         ></div>
 
-        {/* Modal */}
-        <div className={`inline-block w-full ${sizeClasses[size]} my-8 overflow-hidden text-left align-middle transition-all transform bg-white shadow-xl rounded-lg`}>
+        {/* Modal - relative z-10 para estar por encima del overlay */}
+        <div className={`relative z-10 inline-block w-full ${sizeClasses[size]} my-8 overflow-hidden text-left align-middle transition-all transform bg-white shadow-xl rounded-lg`}>
           {/* Header */}
           <div className="flex items-center justify-between px-6 py-4 border-b">
             <h3 className="text-lg font-semibold text-gray-900">{title}</h3>
