@@ -16,14 +16,20 @@ const authenticate = async (req, res, next) => {
       token = req.headers.authorization.split(" ")[1];
     }
 
+    console.log('🔐 Auth Header:', req.headers.authorization);
+    console.log('🎫 Token extraído:', token ? token.substring(0, 20) + '...' : 'NO TOKEN');
+
     if (!token) {
+      console.log('❌ No se encontró token en el header');
       return next(
         new AppError("No estás autenticado. Por favor inicia sesión.", 401)
       );
     }
 
     // Verificar token
+    console.log('🔍 Verificando token...');
     const decoded = verifyToken(token);
+    console.log('✅ Token decodificado:', decoded);
 
     // Verificar que el usuario todavía existe y está activo
     const query = `
@@ -82,6 +88,8 @@ const authenticate = async (req, res, next) => {
 
     next();
   } catch (error) {
+    console.error('❌ Error en authenticate:', error.message);
+    console.error('Stack:', error.stack);
     next(
       new AppError(
         "Token inválido o expirado. Por favor inicia sesión nuevamente.",
