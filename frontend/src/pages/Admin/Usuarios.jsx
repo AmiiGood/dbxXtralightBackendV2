@@ -73,9 +73,13 @@ const Usuarios = () => {
     }
   };
 
-  const handleFormSuccess = () => {
+  const handleFormSuccess = (message) => {
     setShowModal(false);
     loadUsuarios();
+    // Mostrar mensaje después de cerrar el modal
+    if (message) {
+      setTimeout(() => alert(message), 100);
+    }
   };
 
   const columns = [

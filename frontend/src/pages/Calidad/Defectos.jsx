@@ -77,9 +77,13 @@ const Defectos = () => {
     }
   };
 
-  const handleFormSuccess = () => {
+  const handleFormSuccess = (message) => {
     setShowModal(false);
     loadDefectos();
+    // Mostrar mensaje después de cerrar el modal
+    if (message) {
+      setTimeout(() => alert(message), 100);
+    }
   };
 
   const handleFilterChange = (e) => {
