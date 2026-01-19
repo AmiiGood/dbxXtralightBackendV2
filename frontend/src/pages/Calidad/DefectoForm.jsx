@@ -66,8 +66,7 @@ const DefectoForm = ({ defecto, catalogos, onSuccess, onCancel }) => {
       : await defectoService.createDefecto(dataToSend);
 
     if (result.success) {
-      alert(result.message);
-      onSuccess();
+      onSuccess(result.message); // Pasar el mensaje al componente padre
     } else {
       if (result.errors) {
         const newErrors = {};
@@ -78,9 +77,8 @@ const DefectoForm = ({ defecto, catalogos, onSuccess, onCancel }) => {
       } else {
         alert(result.message);
       }
+      setLoading(false);
     }
-
-    setLoading(false);
   };
 
   return (
