@@ -191,7 +191,7 @@ const Defectos = () => {
             name="turnoId"
             value={filters.turnoId}
             onChange={handleFilterChange}
-            options={catalogos.turnos.map((t) => ({ value: t.id, label: t.nombre }))}
+            options={catalogos?.turnos?.map((t) => ({ value: t.id, label: t.nombre })) || []}
             placeholder="Todos"
           />
           <Select
@@ -199,7 +199,7 @@ const Defectos = () => {
             name="areaProduccionId"
             value={filters.areaProduccionId}
             onChange={handleFilterChange}
-            options={catalogos.areasProduccion.map((a) => ({ value: a.id, label: a.nombre }))}
+            options={catalogos?.areasProduccion?.map((a) => ({ value: a.id, label: a.nombre })) || []}
             placeholder="Todas"
           />
           <Select
@@ -207,7 +207,7 @@ const Defectos = () => {
             name="tipoDefectoId"
             value={filters.tipoDefectoId}
             onChange={handleFilterChange}
-            options={catalogos.tiposDefecto.map((t) => ({ value: t.id, label: t.nombre }))}
+            options={catalogos?.tiposDefecto?.map((t) => ({ value: t.id, label: t.nombre })) || []}
             placeholder="Todos"
           />
         </div>
