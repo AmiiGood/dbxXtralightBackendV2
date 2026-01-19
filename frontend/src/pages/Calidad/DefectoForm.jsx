@@ -90,7 +90,7 @@ const DefectoForm = ({ defecto, catalogos, onSuccess, onCancel }) => {
         name="turnoId"
         value={formData.turnoId}
         onChange={handleChange}
-        options={catalogos.turnos.map((t) => ({ value: t.id, label: t.nombre }))}
+        options={catalogos?.turnos?.map((t) => ({ value: t.id, label: t.nombre })) || []}
         required
         error={errors.turnoId}
       />
@@ -105,7 +105,7 @@ const DefectoForm = ({ defecto, catalogos, onSuccess, onCancel }) => {
         name="areaProduccionId"
         value={formData.areaProduccionId}
         onChange={handleChange}
-        options={catalogos.areasProduccion.map((a) => ({ value: a.id, label: a.nombre }))}
+        options={catalogos?.areasProduccion?.map((a) => ({ value: a.id, label: a.nombre })) || []}
         required
         error={errors.areaProduccionId}
       />
@@ -115,7 +115,7 @@ const DefectoForm = ({ defecto, catalogos, onSuccess, onCancel }) => {
         name="tipoDefectoId"
         value={formData.tipoDefectoId}
         onChange={handleChange}
-        options={catalogos.tiposDefecto.map((t) => ({ value: t.id, label: t.nombre }))}
+        options={catalogos?.tiposDefecto?.map((t) => ({ value: t.id, label: t.nombre })) || []}
         required
         error={errors.tipoDefectoId}
       />
