@@ -4,10 +4,15 @@ const authService = {
   // Login
   async login(nombreUsuario, password) {
     try {
+      console.log('Intentando login con:', { nombreUsuario });
+      console.log('API URL:', import.meta.env.VITE_API_URL);
+
       const response = await api.post('/auth/login', {
         nombreUsuario,
         password,
       });
+
+      console.log('Respuesta del servidor:', response.data);
 
       if (response.data.status === 'success') {
         const { token, usuario } = response.data.data;
@@ -16,14 +21,27 @@ const authService = {
         localStorage.setItem('token', token);
         localStorage.setItem('usuario', JSON.stringify(usuario));
 
+        console.log('Login exitoso, usuario guardado:', usuario);
+
         return { success: true, data: response.data.data };
       }
 
       return { success: false, message: response.data.message };
     } catch (error) {
+      console.error('Error en login:', error);
+      console.error('Error response:', error.response?.data);
+
+      // Manejar diferentes tipos de errores
+      if (error.code === 'ERR_NETWORK') {
+        return {
+          success: false,
+          message: 'No se puede conectar al servidor. Asegúrate de que el backend esté corriendo en http://localhost:3000',
+        };
+      }
+
       return {
         success: false,
-        message: error.response?.data?.message || 'Error al iniciar sesión',
+        message: error.response?.data?.message || error.message || 'Error al iniciar sesión',
       };
     }
   },

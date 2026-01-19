@@ -27,11 +27,18 @@ const Login = () => {
     setLoading(true);
     setError('');
 
+    console.log('🔐 Login - Enviando credenciales...');
     const result = await login(formData.nombreUsuario, formData.password);
 
+    console.log('📊 Login - Resultado:', result);
+
     if (result.success) {
+      console.log('✅ Login exitoso, navegando a dashboard...');
+      console.log('👤 Usuario en localStorage:', localStorage.getItem('usuario'));
+      console.log('🎫 Token en localStorage:', localStorage.getItem('token'));
       navigate('/dashboard');
     } else {
+      console.log('❌ Login fallido:', result.message);
       setError(result.message || 'Error al iniciar sesión');
     }
 

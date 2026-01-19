@@ -18,20 +18,29 @@ export const AuthProvider = ({ children }) => {
   useEffect(() => {
     // Verificar si hay un usuario en localStorage al cargar
     const checkAuth = async () => {
+      console.log('🔄 AuthContext - Verificando autenticación...');
       if (authService.isAuthenticated()) {
         const storedUser = authService.getStoredUser();
+        console.log('👤 AuthContext - Usuario encontrado en localStorage:', storedUser);
         setUsuario(storedUser);
+      } else {
+        console.log('❌ AuthContext - No hay token en localStorage');
       }
       setLoading(false);
+      console.log('✅ AuthContext - Loading terminado');
     };
 
     checkAuth();
   }, []);
 
   const login = async (nombreUsuario, password) => {
+    console.log('🔐 AuthContext - Iniciando login...');
     const result = await authService.login(nombreUsuario, password);
     if (result.success) {
+      console.log('✅ AuthContext - Login exitoso, guardando usuario en estado:', result.data.usuario);
       setUsuario(result.data.usuario);
+    } else {
+      console.log('❌ AuthContext - Login fallido:', result.message);
     }
     return result;
   };
