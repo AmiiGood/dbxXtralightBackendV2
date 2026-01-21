@@ -33,7 +33,7 @@ router.post(
     body("password").notEmpty().withMessage("La contraseña es requerida"),
   ],
   handleValidationErrors,
-  authController.login
+  authController.login,
 );
 
 /**
@@ -60,7 +60,7 @@ router.post(
       .withMessage("La nueva contraseña debe tener al menos 6 caracteres"),
   ],
   handleValidationErrors,
-  authController.changePassword
+  authController.changePassword,
 );
 
 /**
@@ -69,5 +69,12 @@ router.post(
  * @access  Private
  */
 router.post("/logout", authenticate, authController.logout);
+
+/**
+ * @route   GET /api/auth/modulos
+ * @desc    Obtener módulos accesibles para el usuario
+ * @access  Private
+ */
+router.get("/modulos", authenticate, authController.getModulos);
 
 module.exports = router;

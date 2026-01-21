@@ -17,7 +17,7 @@ const login = catchAsync(async (req, res, next) => {
   // Validar que se proporcionen credenciales
   if (!nombreUsuario || !password) {
     return next(
-      new AppError("Por favor proporciona nombre de usuario y contraseña", 400)
+      new AppError("Por favor proporciona nombre de usuario y contraseña", 400),
     );
   }
 
@@ -52,15 +52,15 @@ const login = catchAsync(async (req, res, next) => {
     return next(
       new AppError(
         "Tu cuenta ha sido desactivada. Contacta al administrador.",
-        403
-      )
+        403,
+      ),
     );
   }
 
   // Verificar contraseña
   const isPasswordValid = await Usuario.comparePassword(
     password,
-    usuario.password_hash
+    usuario.password_hash,
   );
 
   if (!isPasswordValid) {
@@ -119,7 +119,7 @@ const login = catchAsync(async (req, res, next) => {
         },
       },
     },
-    "Inicio de sesión exitoso"
+    "Inicio de sesión exitoso",
   );
 });
 
@@ -162,13 +162,13 @@ const changePassword = catchAsync(async (req, res, next) => {
 
   if (!passwordActual || !passwordNueva) {
     return next(
-      new AppError("Debes proporcionar la contraseña actual y la nueva", 400)
+      new AppError("Debes proporcionar la contraseña actual y la nueva", 400),
     );
   }
 
   if (passwordNueva.length < 6) {
     return next(
-      new AppError("La nueva contraseña debe tener al menos 6 caracteres", 400)
+      new AppError("La nueva contraseña debe tener al menos 6 caracteres", 400),
     );
   }
 
@@ -182,14 +182,14 @@ const changePassword = catchAsync(async (req, res, next) => {
   // Obtener el hash de la contraseña actual
   const result = await db.query(
     "SELECT password_hash FROM usuarios WHERE id = $1",
-    [usuario.id]
+    [usuario.id],
   );
   const passwordHash = result.rows[0].password_hash;
 
   // Verificar contraseña actual
   const isPasswordValid = await Usuario.comparePassword(
     passwordActual,
-    passwordHash
+    passwordHash,
   );
 
   if (!isPasswordValid) {
@@ -238,9 +238,64 @@ const logout = catchAsync(async (req, res, next) => {
   sendSuccess(res, 200, null, "Sesión cerrada exitosamente");
 });
 
+/**
+ * Obtener módulos accesibles para el usuario actual
+ */
+const getModulos = catchAsync(async (req, res, next) => {
+  const { rol } = req.usuario;
+
+  let modulos;
+
+  if (rol.esAdmin) {
+    const query = `
+      SELECT 
+        m.id,
+        m.nombre,
+        m.descripcion,
+        m.ruta,
+        m.icono,
+        m.orden,
+        true as puede_leer,
+        true as puede_crear,
+        true as puede_editar,
+        true as puede_eliminar
+      FROM modulos m
+      WHERE m.activo = true
+      ORDER BY m.orden ASC
+    `;
+    const result = await db.query(query);
+    modulos = result.rows;
+  } else {
+    const query = `
+      SELECT 
+        m.id,
+        m.nombre,
+        m.descripcion,
+        m.ruta,
+        m.icono,
+        m.orden,
+        rm.puede_leer,
+        rm.puede_crear,
+        rm.puede_editar,
+        rm.puede_eliminar
+      FROM modulos m
+      JOIN roles_modulos rm ON m.id = rm.modulo_id
+      WHERE rm.rol_id = $1 
+        AND m.activo = true
+        AND rm.puede_leer = true
+      ORDER BY m.orden ASC
+    `;
+    const result = await db.query(query, [rol.id]);
+    modulos = result.rows;
+  }
+
+  sendSuccess(res, 200, { modulos });
+});
+
 module.exports = {
   login,
   getMe,
   changePassword,
   logout,
+  getModulos,
 };
