@@ -53,7 +53,8 @@ app.get("/health", (req, res) => {
 app.use("/api/auth", require("./routes/authRoutes"));
 app.use("/api/usuarios", require("./routes/usuarioRoutes"));
 app.use("/api/defectos", require("./routes/defectoRoutes"));
-app.use("/api/logs", require("./routes/logRoutes")); // Nueva ruta de logs
+app.use("/api/logs", require("./routes/logRoutes"));
+app.use("/api/catalogos", require("./routes/catalogoRoutes"));
 
 // Manejo de rutas no encontradas
 app.use(notFound);
