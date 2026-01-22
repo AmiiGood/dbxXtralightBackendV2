@@ -41,7 +41,7 @@ router.post(
  * @desc    Obtener información del usuario actual
  * @access  Private
  */
-router.get("/me", authenticate, authController.getMe);
+router.get("/me", authenticate, authController.getProfile);
 
 /**
  * @route   POST /api/auth/change-password

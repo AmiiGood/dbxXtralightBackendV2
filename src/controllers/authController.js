@@ -1,6 +1,7 @@
+const bcrypt = require("bcryptjs");
+const jwt = require("jsonwebtoken");
 const Usuario = require("../models/Usuario");
-const db = require("../config/database");
-const { generateToken } = require("../utils/jwt");
+const RolModulo = require("../models/RolModulo");
 const { catchAsync, sendSuccess, AppError } = require("../utils/errorHandler");
 const {
   registrarLog,
@@ -14,14 +15,7 @@ const {
 const login = catchAsync(async (req, res, next) => {
   const { nombreUsuario, password } = req.body;
 
-  // Validar que se proporcionen credenciales
-  if (!nombreUsuario || !password) {
-    return next(
-      new AppError("Por favor proporciona nombre de usuario y contraseña", 400),
-    );
-  }
-
-  // Buscar usuario
+  // Buscar usuario por nombre de usuario
   const usuario = await Usuario.findByUsername(nombreUsuario);
 
   if (!usuario) {
@@ -29,13 +23,13 @@ const login = catchAsync(async (req, res, next) => {
     await registrarLog({
       usuarioId: null,
       accion: "LOGIN_FAILED",
-      modulo: "Auth",
-      descripcion: `Intento de login fallido para usuario: ${nombreUsuario}`,
+      modulo: "Autenticación",
+      descripcion: `Intento de login fallido: usuario "${nombreUsuario}" no encontrado`,
       ipAddress: obtenerIP(req),
       userAgent: obtenerUserAgent(req),
     });
 
-    return next(new AppError("Credenciales incorrectas", 401));
+    return next(new AppError("Credenciales inválidas", 401));
   }
 
   // Verificar si el usuario está activo
@@ -43,177 +37,169 @@ const login = catchAsync(async (req, res, next) => {
     await registrarLog({
       usuarioId: usuario.id,
       accion: "LOGIN_FAILED",
-      modulo: "Auth",
+      modulo: "Autenticación",
       descripcion: "Intento de login con cuenta desactivada",
       ipAddress: obtenerIP(req),
       userAgent: obtenerUserAgent(req),
     });
 
-    return next(
-      new AppError(
-        "Tu cuenta ha sido desactivada. Contacta al administrador.",
-        403,
-      ),
-    );
+    return next(new AppError("Tu cuenta está desactivada", 401));
   }
 
   // Verificar contraseña
-  const isPasswordValid = await Usuario.comparePassword(
-    password,
-    usuario.password_hash,
-  );
+  const passwordValido = await bcrypt.compare(password, usuario.password_hash);
 
-  if (!isPasswordValid) {
+  if (!passwordValido) {
     await registrarLog({
       usuarioId: usuario.id,
       accion: "LOGIN_FAILED",
-      modulo: "Auth",
+      modulo: "Autenticación",
       descripcion: "Intento de login con contraseña incorrecta",
       ipAddress: obtenerIP(req),
       userAgent: obtenerUserAgent(req),
     });
 
-    return next(new AppError("Credenciales incorrectas", 401));
+    return next(new AppError("Credenciales inválidas", 401));
   }
 
   // Actualizar último acceso
   await Usuario.updateLastAccess(usuario.id);
 
-  // Generar token
-  const token = generateToken({
-    id: usuario.id,
-    nombreUsuario: usuario.nombre_usuario,
-    rol: usuario.rol_nombre,
-  });
+  // Generar token JWT
+  const token = jwt.sign(
+    {
+      id: usuario.id,
+      uuid: usuario.uuid,
+      nombreUsuario: usuario.nombre_usuario,
+      rolId: usuario.rol_id,
+      esAdmin: usuario.es_admin,
+    },
+    process.env.JWT_SECRET,
+    { expiresIn: process.env.JWT_EXPIRES_IN || "8h" },
+  );
 
   // Registrar login exitoso
   await registrarLog({
     usuarioId: usuario.id,
     accion: "LOGIN_SUCCESS",
-    modulo: "Auth",
+    modulo: "Autenticación",
     descripcion: "Inicio de sesión exitoso",
     ipAddress: obtenerIP(req),
     userAgent: obtenerUserAgent(req),
   });
 
-  // Enviar respuesta (sin incluir el password_hash)
-  sendSuccess(
-    res,
-    200,
-    {
-      token,
-      usuario: {
-        id: usuario.id,
-        uuid: usuario.uuid,
-        nombreUsuario: usuario.nombre_usuario,
-        email: usuario.email,
-        nombreCompleto: usuario.nombre_completo,
-        rol: {
-          id: usuario.rol_id,
-          nombre: usuario.rol_nombre,
-          esAdmin: usuario.es_admin,
-        },
-        area: {
-          id: usuario.area_id,
-          nombre: usuario.area_nombre,
-        },
-      },
+  // Preparar datos del usuario para la respuesta
+  const usuarioResponse = {
+    id: usuario.id,
+    uuid: usuario.uuid,
+    nombreUsuario: usuario.nombre_usuario,
+    email: usuario.email,
+    nombreCompleto: usuario.nombre_completo,
+    rol: {
+      id: usuario.rol_id,
+      nombre: usuario.rol_nombre,
+      esAdmin: usuario.es_admin,
     },
-    "Inicio de sesión exitoso",
-  );
+    area: {
+      id: usuario.area_id,
+      nombre: usuario.area_nombre,
+    },
+  };
+
+  sendSuccess(res, 200, { token, usuario: usuarioResponse }, "Login exitoso");
 });
 
 /**
- * Obtener información del usuario actual
+ * Obtener módulos accesibles para el usuario actual
  */
-const getMe = catchAsync(async (req, res, next) => {
+const getModulos = catchAsync(async (req, res, next) => {
+  const usuario = req.usuario;
+
+  // Obtener módulos según el rol y permisos
+  const modulos = await RolModulo.getModulosAccesibles(
+    usuario.rol?.id || usuario.rolId,
+    usuario.rol?.esAdmin || usuario.esAdmin,
+  );
+
+  sendSuccess(res, 200, { modulos });
+});
+
+/**
+ * Obtener perfil del usuario actual
+ */
+const getProfile = catchAsync(async (req, res, next) => {
   const usuario = await Usuario.findById(req.usuario.id);
 
   if (!usuario) {
     return next(new AppError("Usuario no encontrado", 404));
   }
 
-  sendSuccess(res, 200, {
-    usuario: {
-      id: usuario.id,
-      uuid: usuario.uuid,
-      nombreUsuario: usuario.nombre_usuario,
-      email: usuario.email,
-      nombreCompleto: usuario.nombre_completo,
-      rol: {
-        id: usuario.rol_id,
-        nombre: usuario.rol_nombre,
-        esAdmin: usuario.es_admin,
-      },
-      area: {
-        id: usuario.area_id,
-        nombre: usuario.area_nombre,
-      },
-      ultimoAcceso: usuario.ultimo_acceso,
+  const usuarioResponse = {
+    id: usuario.id,
+    uuid: usuario.uuid,
+    nombreUsuario: usuario.nombre_usuario,
+    email: usuario.email,
+    nombreCompleto: usuario.nombre_completo,
+    rol: {
+      id: usuario.rol_id,
+      nombre: usuario.rol_nombre,
+      esAdmin: usuario.es_admin,
     },
-  });
+    area: {
+      id: usuario.area_id,
+      nombre: usuario.area_nombre,
+    },
+    ultimoAcceso: usuario.ultimo_acceso,
+  };
+
+  sendSuccess(res, 200, { usuario: usuarioResponse });
 });
 
 /**
  * Cambiar contraseña del usuario actual
  */
 const changePassword = catchAsync(async (req, res, next) => {
-  const { passwordActual, passwordNueva } = req.body;
-
-  if (!passwordActual || !passwordNueva) {
-    return next(
-      new AppError("Debes proporcionar la contraseña actual y la nueva", 400),
-    );
-  }
-
-  if (passwordNueva.length < 6) {
-    return next(
-      new AppError("La nueva contraseña debe tener al menos 6 caracteres", 400),
-    );
-  }
+  const { passwordActual, nuevaPassword } = req.body;
+  const usuarioId = req.usuario.id;
 
   // Obtener usuario con password
-  const usuario = await Usuario.findById(req.usuario.id);
+  const usuario = await Usuario.findById(usuarioId);
 
   if (!usuario) {
     return next(new AppError("Usuario no encontrado", 404));
   }
 
-  // Obtener el hash de la contraseña actual
-  const result = await db.query(
-    "SELECT password_hash FROM usuarios WHERE id = $1",
-    [usuario.id],
-  );
-  const passwordHash = result.rows[0].password_hash;
-
   // Verificar contraseña actual
-  const isPasswordValid = await Usuario.comparePassword(
+  const passwordValido = await bcrypt.compare(
     passwordActual,
-    passwordHash,
+    usuario.password_hash,
   );
 
-  if (!isPasswordValid) {
+  if (!passwordValido) {
     await registrarLog({
-      usuarioId: req.usuario.id,
+      usuarioId,
       accion: "CHANGE_PASSWORD_FAILED",
-      modulo: "Auth",
+      modulo: "Autenticación",
       descripcion:
         "Intento de cambio de contraseña con contraseña actual incorrecta",
       ipAddress: obtenerIP(req),
       userAgent: obtenerUserAgent(req),
     });
 
-    return next(new AppError("La contraseña actual es incorrecta", 401));
+    return next(new AppError("La contraseña actual es incorrecta", 400));
   }
 
-  // Actualizar contraseña
-  await Usuario.update(req.usuario.id, { password: passwordNueva });
+  // Hashear nueva contraseña
+  const salt = await bcrypt.genSalt(10);
+  const passwordHash = await bcrypt.hash(nuevaPassword, salt);
 
-  // Registrar cambio de contraseña
+  // Actualizar contraseña
+  await Usuario.updatePassword(usuarioId, passwordHash);
+
   await registrarLog({
-    usuarioId: req.usuario.id,
+    usuarioId,
     accion: "CHANGE_PASSWORD",
-    modulo: "Auth",
+    modulo: "Autenticación",
     descripcion: "Contraseña cambiada exitosamente",
     ipAddress: obtenerIP(req),
     userAgent: obtenerUserAgent(req),
@@ -223,13 +209,13 @@ const changePassword = catchAsync(async (req, res, next) => {
 });
 
 /**
- * Logout (opcional, principalmente para registrar en logs)
+ * Logout (para registro en logs)
  */
 const logout = catchAsync(async (req, res, next) => {
   await registrarLog({
     usuarioId: req.usuario.id,
     accion: "LOGOUT",
-    modulo: "Auth",
+    modulo: "Autenticación",
     descripcion: "Cierre de sesión",
     ipAddress: obtenerIP(req),
     userAgent: obtenerUserAgent(req),
@@ -238,64 +224,10 @@ const logout = catchAsync(async (req, res, next) => {
   sendSuccess(res, 200, null, "Sesión cerrada exitosamente");
 });
 
-/**
- * Obtener módulos accesibles para el usuario actual
- */
-const getModulos = catchAsync(async (req, res, next) => {
-  const { rol } = req.usuario;
-
-  let modulos;
-
-  if (rol.esAdmin) {
-    const query = `
-      SELECT 
-        m.id,
-        m.nombre,
-        m.descripcion,
-        m.ruta,
-        m.icono,
-        m.orden,
-        true as puede_leer,
-        true as puede_crear,
-        true as puede_editar,
-        true as puede_eliminar
-      FROM modulos m
-      WHERE m.activo = true
-      ORDER BY m.orden ASC
-    `;
-    const result = await db.query(query);
-    modulos = result.rows;
-  } else {
-    const query = `
-      SELECT 
-        m.id,
-        m.nombre,
-        m.descripcion,
-        m.ruta,
-        m.icono,
-        m.orden,
-        rm.puede_leer,
-        rm.puede_crear,
-        rm.puede_editar,
-        rm.puede_eliminar
-      FROM modulos m
-      JOIN roles_modulos rm ON m.id = rm.modulo_id
-      WHERE rm.rol_id = $1 
-        AND m.activo = true
-        AND rm.puede_leer = true
-      ORDER BY m.orden ASC
-    `;
-    const result = await db.query(query, [rol.id]);
-    modulos = result.rows;
-  }
-
-  sendSuccess(res, 200, { modulos });
-});
-
 module.exports = {
   login,
-  getMe,
+  getModulos,
+  getProfile,
   changePassword,
   logout,
-  getModulos,
 };

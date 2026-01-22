@@ -55,6 +55,7 @@ app.use("/api/usuarios", require("./routes/usuarioRoutes"));
 app.use("/api/defectos", require("./routes/defectoRoutes"));
 app.use("/api/logs", require("./routes/logRoutes"));
 app.use("/api/catalogos", require("./routes/catalogoRoutes"));
+app.use("/api/permisos", require("./routes/permisoRoutes"));
 
 // Manejo de rutas no encontradas
 app.use(notFound);
