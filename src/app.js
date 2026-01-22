@@ -15,7 +15,7 @@ app.use(
   cors({
     origin: process.env.CORS_ORIGIN || "*",
     credentials: true,
-  })
+  }),
 );
 
 // Body parser
@@ -53,6 +53,7 @@ app.get("/health", (req, res) => {
 app.use("/api/auth", require("./routes/authRoutes"));
 app.use("/api/usuarios", require("./routes/usuarioRoutes"));
 app.use("/api/defectos", require("./routes/defectoRoutes"));
+app.use("/api/logs", require("./routes/logRoutes")); // Nueva ruta de logs
 
 // Manejo de rutas no encontradas
 app.use(notFound);
