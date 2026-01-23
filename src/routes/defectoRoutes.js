@@ -34,7 +34,7 @@ router.use(authenticate);
  */
 router.get(
   "/catalogos",
-  verificarPermiso("Registro de Defectos", "leer"),
+  verificarPermiso("FPG-QA-001 Ver.03 OBA ensamble", "leer"),
   defectoController.getCatalogos
 );
 
@@ -45,7 +45,7 @@ router.get(
  */
 router.get(
   "/turno-actual",
-  verificarPermiso("Registro de Defectos", "leer"),
+  verificarPermiso("FPG-QA-001 Ver.03 OBA ensamble", "leer"),
   defectoController.getTurnoActual
 );
 
@@ -85,7 +85,7 @@ router.get(
  */
 router.get(
   "/",
-  verificarPermiso("Registro de Defectos", "leer"),
+  verificarPermiso("FPG-QA-001 Ver.03 OBA ensamble", "leer"),
   getRegistrosValidation,
   handleValidationErrors,
   defectoController.getRegistros
@@ -98,7 +98,7 @@ router.get(
  */
 router.get(
   "/:id",
-  verificarPermiso("Registro de Defectos", "leer"),
+  verificarPermiso("FPG-QA-001 Ver.03 OBA ensamble", "leer"),
   defectoController.getRegistroById
 );
 
@@ -109,7 +109,7 @@ router.get(
  */
 router.post(
   "/",
-  verificarPermiso("Registro de Defectos", "crear"),
+  verificarPermiso("FPG-QA-001 Ver.03 OBA ensamble", "crear"),
   createRegistroValidation,
   handleValidationErrors,
   defectoController.createRegistro
@@ -122,7 +122,7 @@ router.post(
  */
 router.put(
   "/:id",
-  verificarPermiso("Registro de Defectos", "editar"),
+  verificarPermiso("FPG-QA-001 Ver.03 OBA ensamble", "editar"),
   updateRegistroValidation,
   handleValidationErrors,
   defectoController.updateRegistro
@@ -135,7 +135,7 @@ router.put(
  */
 router.delete(
   "/:id",
-  verificarPermiso("Registro de Defectos", "eliminar"),
+  verificarPermiso("FPG-QA-001 Ver.03 OBA ensamble", "eliminar"),
   defectoController.deleteRegistro
 );
 
