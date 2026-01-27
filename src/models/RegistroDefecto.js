@@ -52,7 +52,24 @@ class RegistroDefecto {
    */
   static async findAll(filters = {}) {
     let query = `
-      SELECT * FROM vista_registros_defectos
+      SELECT 
+        rd.id,
+        rd.turno_id,
+        t.nombre as turno,
+        rd.area_produccion_id,
+        ap.nombre as area_produccion,
+        rd.tipo_defecto_id,
+        td.nombre as tipo_defecto,
+        rd.pares_rechazados,
+        rd.observaciones,
+        rd.fecha_registro,
+        rd.registrado_por,
+        u.nombre_completo as registrado_por_nombre
+      FROM registros_defectos rd
+      LEFT JOIN turnos t ON rd.turno_id = t.id
+      LEFT JOIN areas_produccion ap ON rd.area_produccion_id = ap.id
+      LEFT JOIN tipos_defectos td ON rd.tipo_defecto_id = td.id
+      LEFT JOIN usuarios u ON rd.registrado_por = u.id
       WHERE 1=1
     `;
 
@@ -61,49 +78,55 @@ class RegistroDefecto {
 
     // Filtro por fecha inicio
     if (filters.fechaInicio) {
-      query += ` AND fecha_registro >= $${paramCount}`;
+      query += ` AND rd.fecha_registro >= $${paramCount}`;
       values.push(filters.fechaInicio);
       paramCount++;
     }
 
     // Filtro por fecha fin
     if (filters.fechaFin) {
-      query += ` AND fecha_registro <= $${paramCount}`;
+      query += ` AND rd.fecha_registro <= $${paramCount}`;
       values.push(filters.fechaFin);
       paramCount++;
     }
 
     // Filtro por turno
     if (filters.turnoId) {
-      query += ` AND turno_id = $${paramCount}`;
+      query += ` AND rd.turno_id = $${paramCount}`;
       values.push(filters.turnoId);
       paramCount++;
     }
 
     // Filtro por área de producción
     if (filters.areaProduccionId) {
-      query += ` AND area_produccion_id = $${paramCount}`;
+      query += ` AND rd.area_produccion_id = $${paramCount}`;
       values.push(filters.areaProduccionId);
       paramCount++;
     }
 
     // Filtro por tipo de defecto
     if (filters.tipoDefectoId) {
-      query += ` AND tipo_defecto_id = $${paramCount}`;
+      query += ` AND rd.tipo_defecto_id = $${paramCount}`;
       values.push(filters.tipoDefectoId);
       paramCount++;
     }
 
     // Filtro por usuario que registró
     if (filters.registradoPor) {
-      query += ` AND registrado_por = $${paramCount}`;
+      query += ` AND rd.registrado_por = $${paramCount}`;
       values.push(filters.registradoPor);
       paramCount++;
     }
 
     // Ordenamiento
-    const orderBy = filters.orderBy || "fecha_registro";
-    const orderDir = filters.orderDir || "DESC";
+    const orderByMap = {
+      fecha_registro: "rd.fecha_registro",
+      pares_rechazados: "rd.pares_rechazados",
+      turno_nombre: "t.nombre",
+      tipo_defecto_nombre: "td.nombre",
+    };
+    const orderBy = orderByMap[filters.orderBy] || "rd.fecha_registro";
+    const orderDir = filters.orderDir === "ASC" ? "ASC" : "DESC";
     query += ` ORDER BY ${orderBy} ${orderDir}`;
 
     // Paginación
@@ -113,7 +136,7 @@ class RegistroDefecto {
       paramCount++;
     }
 
-    if (filters.offset) {
+    if (filters.offset !== undefined && filters.offset !== null) {
       query += ` OFFSET $${paramCount}`;
       values.push(filters.offset);
       paramCount++;
@@ -129,7 +152,7 @@ class RegistroDefecto {
   static async count(filters = {}) {
     let query = `
       SELECT COUNT(*) as total
-      FROM registros_defectos
+      FROM registros_defectos rd
       WHERE 1=1
     `;
 
@@ -137,37 +160,37 @@ class RegistroDefecto {
     let paramCount = 1;
 
     if (filters.fechaInicio) {
-      query += ` AND fecha_registro >= $${paramCount}`;
+      query += ` AND rd.fecha_registro >= $${paramCount}`;
       values.push(filters.fechaInicio);
       paramCount++;
     }
 
     if (filters.fechaFin) {
-      query += ` AND fecha_registro <= $${paramCount}`;
+      query += ` AND rd.fecha_registro <= $${paramCount}`;
       values.push(filters.fechaFin);
       paramCount++;
     }
 
     if (filters.turnoId) {
-      query += ` AND turno_id = $${paramCount}`;
+      query += ` AND rd.turno_id = $${paramCount}`;
       values.push(filters.turnoId);
       paramCount++;
     }
 
     if (filters.areaProduccionId) {
-      query += ` AND area_produccion_id = $${paramCount}`;
+      query += ` AND rd.area_produccion_id = $${paramCount}`;
       values.push(filters.areaProduccionId);
       paramCount++;
     }
 
     if (filters.tipoDefectoId) {
-      query += ` AND tipo_defecto_id = $${paramCount}`;
+      query += ` AND rd.tipo_defecto_id = $${paramCount}`;
       values.push(filters.tipoDefectoId);
       paramCount++;
     }
 
     if (filters.registradoPor) {
-      query += ` AND registrado_por = $${paramCount}`;
+      query += ` AND rd.registrado_por = $${paramCount}`;
       values.push(filters.registradoPor);
       paramCount++;
     }
@@ -181,8 +204,28 @@ class RegistroDefecto {
    */
   static async findById(id) {
     const query = `
-      SELECT * FROM vista_registros_defectos
-      WHERE id = $1
+      SELECT 
+        rd.id,
+        rd.turno_id,
+        t.nombre as turno,
+        t.nombre as turno_nombre,
+        rd.area_produccion_id,
+        ap.nombre as area_produccion,
+        ap.nombre as area_produccion_nombre,
+        rd.tipo_defecto_id,
+        td.nombre as tipo_defecto,
+        td.nombre as tipo_defecto_nombre,
+        rd.pares_rechazados,
+        rd.observaciones,
+        rd.fecha_registro,
+        rd.registrado_por,
+        u.nombre_completo as registrado_por_nombre
+      FROM registros_defectos rd
+      LEFT JOIN turnos t ON rd.turno_id = t.id
+      LEFT JOIN areas_produccion ap ON rd.area_produccion_id = ap.id
+      LEFT JOIN tipos_defectos td ON rd.tipo_defecto_id = td.id
+      LEFT JOIN usuarios u ON rd.registrado_por = u.id
+      WHERE rd.id = $1
     `;
 
     const result = await db.query(query, [id]);
@@ -264,12 +307,14 @@ class RegistroDefecto {
   static async getResumenPorTurno(fechaInicio, fechaFin) {
     const query = `
       SELECT 
-        turno,
-        fecha,
-        total_registros,
-        total_pares_rechazados
-      FROM vista_resumen_defectos_turno
-      WHERE fecha >= $1 AND fecha <= $2
+        t.nombre as turno,
+        DATE(rd.fecha_registro) as fecha,
+        COUNT(*) as total_registros,
+        SUM(rd.pares_rechazados) as total_pares_rechazados
+      FROM registros_defectos rd
+      JOIN turnos t ON rd.turno_id = t.id
+      WHERE rd.fecha_registro >= $1 AND rd.fecha_registro <= $2
+      GROUP BY t.nombre, DATE(rd.fecha_registro)
       ORDER BY fecha DESC, turno ASC
     `;
 
