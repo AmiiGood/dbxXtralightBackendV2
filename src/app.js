@@ -57,6 +57,7 @@ app.use("/api/logs", require("./routes/logRoutes"));
 app.use("/api/catalogos", require("./routes/catalogoRoutes"));
 app.use("/api/permisos", require("./routes/permisoRoutes"));
 app.use("/api/qr", require("./routes/qrRoutes"));
+app.use("/api/shipping", require("./routes/shippingRoutes"));
 
 // Manejo de rutas no encontradas
 app.use(notFound);
