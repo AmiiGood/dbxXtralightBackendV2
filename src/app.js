@@ -2,34 +2,28 @@ const express = require("express");
 const cors = require("cors");
 const helmet = require("helmet");
 const morgan = require("morgan");
+const https = require("https");
+const fs = require("fs");
 const { errorHandler, notFound } = require("./middlewares/errorMiddleware");
 
-// Inicializar app
 const app = express();
 
-// Middlewares de seguridad
-app.use(helmet()); // Seguridad HTTP headers
-
-// CORS
+app.use(helmet());
 app.use(
   cors({
     origin: process.env.CORS_ORIGIN || "*",
     credentials: true,
   }),
 );
-
-// Body parser
 app.use(express.json({ limit: "10mb" }));
 app.use(express.urlencoded({ extended: true, limit: "10mb" }));
 
-// Logging
 if (process.env.NODE_ENV === "development") {
   app.use(morgan("dev"));
 } else {
   app.use(morgan("combined"));
 }
 
-// Ruta de bienvenida
 app.get("/", (req, res) => {
   res.json({
     status: "success",
@@ -39,7 +33,6 @@ app.get("/", (req, res) => {
   });
 });
 
-// Health check
 app.get("/health", (req, res) => {
   res.json({
     status: "success",
@@ -49,7 +42,6 @@ app.get("/health", (req, res) => {
   });
 });
 
-// Rutas de la API
 app.use("/api/auth", require("./routes/authRoutes"));
 app.use("/api/usuarios", require("./routes/usuarioRoutes"));
 app.use("/api/defectos", require("./routes/defectoRoutes"));
@@ -61,10 +53,7 @@ app.use("/api/shipping", require("./routes/shippingRoutes"));
 app.use("/api/produccion", require("./routes/produccionRoutes"));
 app.use("/api/recepcion", require("./routes/recepcionRoutes"));
 
-// Manejo de rutas no encontradas
 app.use(notFound);
-
-// Middleware de manejo de errores (debe ir al final)
 app.use(errorHandler);
 
 module.exports = app;
