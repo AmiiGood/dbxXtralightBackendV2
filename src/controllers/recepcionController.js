@@ -10,7 +10,7 @@ function parsearQrCaja(raw) {
   if (isNaN(pares) || pares <= 0) return null;
   return {
     boxId: parts[0],
-    sku: parts[1].replace(/'/g, "-"),
+    sku: parts[1].replace(/'/g, "-").toUpperCase(),
     paresEsperados: pares,
     consecutivo: parts[3],
   };
@@ -72,7 +72,7 @@ const escanearPar = catchAsync(async (req, res, next) => {
 
   // Validar que el UPC exista en productos_crocs con el SKU de la caja
   const validacion = await db.query(
-    `SELECT id FROM productos_crocs WHERE sku = $1 AND upc = $2 AND activo = true LIMIT 1`,
+    `SELECT id FROM productos_crocs WHERE UPPER(sku) = UPPER($1) AND upc = $2 AND activo = true LIMIT 1`,
     [caja.sku, upc]
   );
   if (!validacion.rows.length) {
