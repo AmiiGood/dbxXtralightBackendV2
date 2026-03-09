@@ -141,8 +141,7 @@ const getReporte = catchAsync(async (req, res) => {
      FROM recepcion_cajas c
      LEFT JOIN usuarios u ON c.creado_por = u.id
      WHERE ${where}
-     ORDER BY c.creado_en DESC
-     LIMIT 500`,
+     ORDER BY c.creado_en DESC`,
     params
   );
 
@@ -178,7 +177,7 @@ const exportExcel = catchAsync(async (req, res) => {
             c.creado_en, u.nombre_completo as usuario
      FROM recepcion_cajas c
      LEFT JOIN usuarios u ON c.creado_por = u.id
-     WHERE ${where} ORDER BY c.creado_en DESC LIMIT 5000`,
+     WHERE ${where} ORDER BY c.creado_en DESC`,
     params
   );
 
@@ -226,7 +225,7 @@ const exportPDF = catchAsync(async (req, res) => {
             c.creado_en, u.nombre_completo as usuario
      FROM recepcion_cajas c
      LEFT JOIN usuarios u ON c.creado_por = u.id
-     WHERE ${where} ORDER BY c.creado_en DESC LIMIT 5000`,
+     WHERE ${where} ORDER BY c.creado_en DESC`,
     params
   );
 
