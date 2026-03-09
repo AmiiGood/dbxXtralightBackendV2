@@ -1,6 +1,5 @@
 require("dotenv").config();
-const https = require("https");
-const fs = require("fs");
+const http = require("http");
 const app = require("./src/app");
 const db = require("./src/config/database");
 
@@ -11,16 +10,11 @@ const startServer = async () => {
     await db.query("SELECT NOW()");
     console.log("✅ Conexión a PostgreSQL establecida correctamente");
 
-    const options = {
-      key: fs.readFileSync("key.pem"),
-      cert: fs.readFileSync("cert.pem"),
-    };
-
-    const server = https.createServer(options, app).listen(PORT, () => {
+    const server = http.createServer(app).listen(PORT, () => {
       console.log(`🚀 Servidor corriendo en puerto ${PORT}`);
       console.log(`📍 Entorno: ${process.env.NODE_ENV || "development"}`);
-      console.log(`🔗 URL: https://localhost:${PORT}`);
-      console.log(`💚 Health check: https://localhost:${PORT}/health`);
+      console.log(`🔗 URL: http://localhost:${PORT}`);
+      console.log(`💚 Health check: http://localhost:${PORT}/health`);
     });
 
     const gracefulShutdown = (signal) => {
@@ -45,9 +39,7 @@ const startServer = async () => {
     process.on("unhandledRejection", (err) => {
       console.error("❌ UNHANDLED REJECTION! 💥 Cerrando servidor...");
       console.error(err.name, err.message);
-      server.close(() => {
-        process.exit(1);
-      });
+      server.close(() => process.exit(1));
     });
 
     process.on("uncaughtException", (err) => {
@@ -57,9 +49,6 @@ const startServer = async () => {
     });
   } catch (error) {
     console.error("❌ Error al conectar a la base de datos:", error);
-    console.error(
-      "💡 Verifica que PostgreSQL esté corriendo y las credenciales en .env sean correctas"
-    );
     process.exit(1);
   }
 };
