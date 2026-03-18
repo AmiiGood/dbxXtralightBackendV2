@@ -52,6 +52,7 @@ app.use("/api/qr", require("./routes/qrRoutes"));
 app.use("/api/shipping", require("./routes/shippingRoutes"));
 app.use("/api/produccion", require("./routes/produccionRoutes"));
 app.use("/api/recepcion", require("./routes/recepcionRoutes"));
+app.use("/api/ensamble", require("./routes/ensambleRoutes"));
 
 app.use(notFound);
 app.use(errorHandler);
